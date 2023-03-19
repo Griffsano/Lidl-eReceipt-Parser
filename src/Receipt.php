@@ -22,6 +22,7 @@ class Receipt {
         $ocr->lang('deu');  // german language to support umlaut
         $this->rawReceipt      = $ocr->run();
         $this->rawReceipt      = str_replace('@', '0', $this->rawReceipt); //Maybe there is a better solution to handle these ocr problem?
+        $this->rawReceipt      = str_replace('®', '0', $this->rawReceipt);
         $this->explodedReceipt = explode("\n", $this->rawReceipt);
     }
 
@@ -53,6 +54,9 @@ class Receipt {
         $next = false;
         foreach($this->explodedReceipt as $row)
             if($next) {
+                // catch possible empty lines between sum and payment method
+                if(trim($row)=="")
+                    continue;
                 if(!preg_match("/(.*) \d+,\d{2}/", $row, $match))
                     throw new ReceiptParseException();
                 return $match[1];
@@ -86,6 +90,10 @@ class Receipt {
     private function getProductStartLine(): int {
         foreach(explode("\n", $this->rawReceipt) as $line => $content)
             if(trim($content) == "EUR")
+                return $line + 1;
+        // in case the "EUR" heading is not found, revert to "Bonkopie" header
+        foreach(explode("\n", $this->rawReceipt) as $line => $content)
+            if(trim($content) == "Bonkopie")
                 return $line + 1;
         throw new ReceiptParseException();
     }
@@ -125,7 +133,9 @@ class Receipt {
 
         for($lineNr = $this->getProductStartLine(); $lineNr <= $this->getProductEndLine(); $lineNr++) {
             //echo $this->explodedReceipt[$lineNr];
-            if($this->isProductLine($lineNr)) {
+            if(trim($this->explodedReceipt[$lineNr]) == "")
+                continue;   // skip empty lines
+            elseif($this->isProductLine($lineNr)) {
 
                 if($lastPosition !== NULL) {
                     $positions[]  = $lastPosition;
