@@ -142,34 +142,49 @@ class Receipt {
                     $lastPosition = NULL;
                 }
 
-                if(preg_match('/(.*) (-?\d+,\d{2}) ([A-Z])/', $this->explodedReceipt[$lineNr], $match)) {
+                if(preg_match('/(.*) (-?\d+,\d{2}).*x.*(\d+) (-?\d+,\d{2}) ([A-Z])/', $this->explodedReceipt[$lineNr], $match)) {
+                    // new receipts have the number of items in the same line as the product name
+                    // example: "Productname 0,99 x 2 1,98 A"
+                    $lastPosition = new Position();
+                    $lastPosition->setName(trim($match[1]));
+                    $lastPosition->setPriceSingle((float)str_replace(',', '.', $match[2]));
+                    $lastPosition->setAmount((int)$match[3]);
+                    $lastPosition->setPriceTotal((float)str_replace(',', '.', $match[4]));
+                    $lastPosition->setTaxCode($match[5]);
+                } elseif(preg_match('/(.*) (-?\d+,\d{2}) ([A-Z])/', $this->explodedReceipt[$lineNr], $match)) {
+                    // example: "Productname 0,99 A"
                     $lastPosition = new Position();
                     $lastPosition->setName(trim($match[1]));
                     $lastPosition->setPriceTotal((float)str_replace(',', '.', $match[2]));
                     $lastPosition->setTaxCode($match[3]);
                 } elseif(preg_match('/(.*) (-?\d+,\d{2})/', $this->explodedReceipt[$lineNr], $match)) {
+                    // example: "Productname 0,99"
                     $lastPosition = new Position();
                     $lastPosition->setName(trim($match[1]));
                     $lastPosition->setPriceTotal((float)str_replace(',', '.', $match[2]));
                 } else throw new ReceiptParseException("Error while parsing Product line");
 
-            } /*else if ($this->isAmountLine($lineNr)) {
+            } else if ($this->isAmountLine($lineNr)) {
 
-                if (preg_match('/(-?\d+) Stk x *(-?\d+,\d{2})/', $this->expl_receipt[$lineNr], $match)) {
+                if (preg_match('/(\d+).*x.*(-?\d+,\d{2})/', $this->explodedReceipt[$lineNr], $match)) {
+                    // old receipts have the number of items in the line below the product name
+                    // example: "Productname 1,98 A" followed by "2 x 0,99"
                     $lastPosition->setAmount((int)$match[1]);
                     $lastPosition->setPriceSingle((float)str_replace(',', '.', $match[2]));
                 } else throw new ReceiptParseException("Error while parsing Amount line");
 
             } else if ($this->isWeightLine($lineNr)) {
 
-                if (preg_match('/(-?\d+,\d{3}) kg x *(-?\d+,\d{2}) EUR/', $this->expl_receipt[$lineNr], $match)) {
+                if (preg_match('/(-?\d+,\d{3}) kg x *(-?\d+,\d{2}) EUR/', $this->explodedReceipt[$lineNr], $match)) {
+                    // example: "Productname 1,00 A" followed by "0,500 kg x 2,00 EUR/kg"
                     $lastPosition->setWeight((float)str_replace(',', '.', $match[1]));
                     $lastPosition->setPriceSingle((float)str_replace(',', '.', $match[2]));
-                } else if (preg_match('/Handeingabe E-Bon *(-?\d+,\d{3}) kg/', $this->expl_receipt[$lineNr], $match)) {
+                } else if (preg_match('/Handeingabe E-Bon *(-?\d+,\d{3}) kg/', $this->explodedReceipt[$lineNr], $match)) {
+                    // example: TODO
                     $lastPosition->setWeight((float)str_replace(',', '.', $match[1]));
                 } else throw new ReceiptParseException("Error while parsing Weight line");
 
-            }*/ else throw new ReceiptParseException("Error while parsing unknown receipt line");
+            } else throw new ReceiptParseException("Error while parsing unknown receipt line");
 
         }
 
@@ -183,17 +198,14 @@ class Receipt {
     }
 
     private function isWeightLine($lineNr) {
-        return false; //TODO: Receipt example needed
-        return strpos($this->expl_receipt[$lineNr], 'kg') !== false;
+        return strpos($this->explodedReceipt[$lineNr], 'EUR/kg') !== false;
     }
 
     private function isAmountLine($lineNr) {
-        return false; //TODO: Receipt example needed
-        return strpos($this->expl_receipt[$lineNr], ' Stk x') !== false;
+        return preg_match('/^\d+ *x *-?\d+,\d/', $this->explodedReceipt[$lineNr]);
     }
 
     private function isProductLine($lineNr) {
-        return true; //TODO: Receipt example needed
         return !$this->isWeightLine($lineNr) && !$this->isAmountLine($lineNr);
     }
 }
