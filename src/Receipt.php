@@ -18,6 +18,8 @@ class Receipt {
      */
     public function __construct(string $imagePath) {
         $ocr                   = new TesseractOCR($imagePath);
+        $ocr->psm(4);       // page segmentation mode 4: Assume a single column of text of variable sizes.
+        $ocr->lang('deu');  // german language to support umlaut
         $this->rawReceipt      = $ocr->run();
         $this->rawReceipt      = str_replace('@', '0', $this->rawReceipt); //Maybe there is a better solution to handle these ocr problem?
         $this->explodedReceipt = explode("\n", $this->rawReceipt);
