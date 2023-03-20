@@ -184,6 +184,13 @@ class Receipt {
                     $lastPosition->setWeight((float)str_replace(',', '.', $match[1]));
                 } else throw new ReceiptParseException("Error while parsing Weight line");
 
+            } elseif ($this->isDiscountLine($lineNr)) {
+
+                if (preg_match('/rabatt.*(-\d+,\d{2})/i', $this->explodedReceipt[$lineNr], $match)) {
+                    // example: "Productname 1,98 A" followed by "Rabatt -0,10"
+                    $lastPosition->addDiscount((float)str_replace(',', '.', $match[1]));
+                } else throw new ReceiptParseException("Error while parsing Discount line");
+
             } else throw new ReceiptParseException("Error while parsing unknown receipt line");
 
         }
@@ -205,7 +212,11 @@ class Receipt {
         return preg_match('/^\d+ *x *-?\d+,\d/', $this->explodedReceipt[$lineNr]);
     }
 
+    private function isDiscountLine($lineNr) {
+        return preg_match('/rabatt.*-\d,\d{2}/i', $this->explodedReceipt[$lineNr]);
+    }
+
     private function isProductLine($lineNr) {
-        return !$this->isWeightLine($lineNr) && !$this->isAmountLine($lineNr);
+        return !$this->isWeightLine($lineNr) && !$this->isAmountLine($lineNr) && !$this->isDiscountLine($lineNr);
     }
 }

@@ -14,6 +14,7 @@ class Position
 
     private $weight;
     private $amount;
+    private $discount;
 
     /**
      * The name of the product.
@@ -25,7 +26,7 @@ class Position
     }
 
     /**
-     * The total sum of the position
+     * The total sum of the position, without any discounts if applicable
      * @return float
      * @throws ReceiptParseException
      */
@@ -87,6 +88,15 @@ class Position
         return $this->amount;
     }
 
+    /**
+     * The discount of the position (if the product is discounted)
+     * @return float|NULL
+     */
+    public function getDiscount()
+    {
+        return $this->discount;
+    }
+
     public function setName(string $name)
     {
         $this->name = $name;
@@ -115,6 +125,14 @@ class Position
     public function setAmount(int $amount)
     {
         $this->amount = $amount;
+    }
+
+    public function addDiscount(float $discount)
+    {
+        if ($this->discount === NULL)
+            $this->discount = $discount;
+        else
+            $this->discount = $this->discount + $discount;
     }
 
 }
