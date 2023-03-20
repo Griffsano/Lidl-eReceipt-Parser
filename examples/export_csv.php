@@ -32,16 +32,17 @@ if($suffix_receipts == $suffix_products)
 // headers for CSV exports
 $decimator = ";";
 $header_receipts = '"Filename"' . $decimator .
-'"ID"' . $decimator . 
+'"ID"' . $decimator .
 '"Timestamp"' . $decimator .
-'"Total"' . $decimator . 
+'"Total"' . $decimator .
 '"PaymentMethod"' . "\n";
 $header_products = '"Filename"' . $decimator .
-'"Name"' . $decimator . 
-'"PriceSingle"' . $decimator . 
+'"Name"' . $decimator .
+'"PriceSingle"' . $decimator .
 '"Amount"' . $decimator .
-'"Weight"' . $decimator . 
-'"PriceTotal"' . $decimator . 
+'"Weight"' . $decimator .
+'"PriceTotal"' . $decimator .
+'"Discount"' . $decimator .
 '"TaxCode"' . "\n";
 
 // open combined export files and write header if necessary
@@ -81,22 +82,24 @@ foreach($files as $filename)
         echo "ID: " . $receipt->getID() . "\n";
         echo "Timestamp: " . $receipt->getTimestamp() . "\n";
         echo "Total: " . $receipt->getTotal() . "\n";
-        echo "PaymentMethod: " . $receipt->getPaymentMethod() . "\n";
+        echo "Payment Method: " . $receipt->getPaymentMethod() . "\n";
 
         // display product data
+        echo "Product Name\t\tPrice\tx Count / Weight\tTotal Discount Tax\n";
         foreach($receipt->getPositions() as $position) {
             echo str_pad($position->getName(), 20) . "\t" .
-            $position->getPriceSingle() . "\tx " . 
+            $position->getPriceSingle() . "\tx " .
             str_pad($position->getAmount(), 2) . " / " .
-            str_pad($position->getWeight(), 5) . " kg\t\t" . 
-            $position->getPriceTotal() . "\t" . 
+            str_pad($position->getWeight(), 5) . " kg\t\t" .
+            $position->getPriceTotal() . "\t" .
+            $position->getDiscount() . "\t" .
             $position->getTaxCode() . "\n";
         }
 
         // write receipt data lines to CSV files
         $line = '"' . $filename . '"' . $decimator .
-        '"' . $receipt->getID() . '"' . $decimator . 
-        '"' . $receipt->getTimestamp() . '"' . $decimator . 
+        '"' . $receipt->getID() . '"' . $decimator .
+        '"' . $receipt->getTimestamp() . '"' . $decimator .
         '"' . $receipt->getTotal() . '"' . $decimator .
         '"' . $receipt->getPaymentMethod() . '"' . "\n";
 
@@ -116,11 +119,12 @@ foreach($files as $filename)
         }
         foreach($receipt->getPositions() as $position) {
             $line = '"' . $filename . '"' . $decimator .
-            '"' . $position->getName() . '"' . $decimator . 
-            '"' . $position->getPriceSingle() . '"' . $decimator . 
+            '"' . $position->getName() . '"' . $decimator .
+            '"' . $position->getPriceSingle() . '"' . $decimator .
             '"' . $position->getAmount() . '"' . $decimator .
-            '"' . $position->getWeight() . '"' . $decimator . 
-            '"' . $position->getPriceTotal() . '"' . $decimator . 
+            '"' . $position->getWeight() . '"' . $decimator .
+            '"' . $position->getPriceTotal() . '"' . $decimator .
+            '"' . $position->getDiscount() . '"' . $decimator .
             '"' . $position->getTaxCode() . '"' . "\n";
 
             if($export_receipt)
